@@ -275,10 +275,15 @@ def get_index_timeseries(
 ):
     """Returns chronological panel time series of Laspeyres, Fisher, Paasche, Spot T+1, and CPI transmission bps."""
     conn = get_db_connection()
+    # Return the MOST RECENT `limit` days in chronological (ascending) order so a chart
+    # always tracks the latest data as new days are ingested. (Previously ASC LIMIT
+    # returned the OLDEST records, freezing the dashboard on the first `limit` days.)
     rows = conn.execute("""
-        SELECT * FROM national_indices 
-        ORDER BY calculation_date ASC 
-        LIMIT ?
+        SELECT * FROM (
+            SELECT * FROM national_indices
+            ORDER BY calculation_date DESC
+            LIMIT ?
+        ) ORDER BY calculation_date ASC
     """, (limit,)).fetchall()
 
     records = []
