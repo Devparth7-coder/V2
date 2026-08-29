@@ -636,9 +636,11 @@ async function askAI(){
 async function boot(){
   loadOverview();loadRoutes();loadHeatmap();loadCPIDeco();loadTrust();
   try{const h=await get('/health');el('healthPill').textContent='HEALTHY · '+(h.components&&h.components.database||'SQLite');}catch(e){el('healthPill').textContent='API offline';}
-  setInterval(()=>{if(document.querySelector('#nav a.active').dataset.view==='overview')loadOverview();},45000);
+  // Poll the overview (incl. the national trend chart) frequently so new worker cycles
+  // show up as fresh points on the graph shortly after each 60s ingestion cycle.
+  setInterval(()=>{if(document.querySelector('#nav a.active').dataset.view==='overview')loadOverview();},20000);
 }
 boot();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a32f16666cb04700',t:'MTc4ODA0MzU0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
