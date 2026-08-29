@@ -104,7 +104,18 @@ class IngestionWorkerDaemon:
         """
         start_time = time.monotonic()
         now_dt = datetime.datetime.now(datetime.timezone.utc)
-        booking_date = datetime.date.today()
+        # Advance the simulated booking date past the latest stored day so each ingestion
+        # cycle appends a NEW data point (making the dashboard graph update live) instead
+        # of repeatedly overwriting the same "today" row.
+        conn = get_db_connection()
+        last_row = conn.execute("SELECT MAX(calculation_date) as dt FROM national_indices").fetchone()
+        if last_row and last_row["dt"]:
+            try:
+                booking_date = datetime.date.fromisoformat(last_row["dt"]) + datetime.timedelta(days=1)
+            except Exception:
+                booking_date = datetime.date.today()
+        else:
+            booking_date = datetime.date.today()
         date_str = booking_date.isoformat()
 
         await stream_manager.broadcast_event(
@@ -112,8 +123,6 @@ class IngestionWorkerDaemon:
             {"cycle": self.total_cycles_executed + 1, "date": date_str},
             f"Starting ingestion cycle #{self.total_cycles_executed + 1} for {date_str}"
         )
-
-        conn = get_db_connection()
 
         # 1. Scrape / Ingest Quotes
         feed = MarketFeedGenerator(SimulationConfig(seed=None, anomaly_rate=0.015))
