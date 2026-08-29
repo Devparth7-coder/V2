@@ -1,19 +1,24 @@
 """
-Workspace-root FastAPI entrypoint shim so preview tooling can auto-detect `app`.
+VayuSutra — Canonical FastAPI entrypoint.
 
-The real application lives in the SIH26056 repository; this shim just points at it
-so a generic entrypoint scan finds `app` in a default location.
+Run with:
+    uvicorn main:app --host 0.0.0.0 --port 8000
+or:
+    python main.py
 """
 import os
 import sys
 
-_HERE = os.path.dirname(os.path.abspath(__file__))
-_REPO = os.path.join(_HERE, "SIH26056")
-if os.path.isdir(_REPO):
-    sys.path.insert(0, _REPO)
+# Ensure the repo root is on sys.path when launched from elsewhere.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+import uvicorn  # noqa: E402
 from vayusutra_apix.api.main import app  # noqa: E402
 
 if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("PORT", "8000")))
+    uvicorn.run(
+        app,
+        host=os.environ.get("HOST", "0.0.0.0"),
+        port=int(os.environ.get("PORT", "8000")),
+        workers=int(os.environ.get("WORKERS", "1")),
+    )

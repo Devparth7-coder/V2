@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VayuSutra | National Airfare Intelligence &amp; Inflation Analytics Platform</title>
+<style>
+:root{
+  --bg:#070d1e; --bg2:#0c1428; --card:#0e172e; --card2:#111c38; --border:#1e2c4f;
+  --text:#eef2f7; --muted:#9aa9c4; --dim:#6b7a99;
+  --saff:#ff9933; --saff-g:rgba(255,153,51,.18); --blue:#38bdf8; --green:#22c55e;
+  --red:#ef4444; --amber:#f59e0b; --purple:#c084fc; --teal:#2dd4bf;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5}
+a{color:var(--blue);text-decoration:none}
+.wrap{max-width:1500px;margin:0 auto;padding:14px}
+/* topbar */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+  background:linear-gradient(135deg,#0e172e,#14264d);border:1px solid var(--border);
+  border-radius:12px;padding:12px 16px;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:12px}
+.emblem{width:38px;height:38px;border-radius:50%;
+  background:conic-gradient(#ff9933 0 33%,#ffffff 33% 66%,#138808 66% 100%);
+  position:relative;flex:none}
+.emblem:after{content:"";position:absolute;inset:7px;border-radius:50%;background:#0e172e}
+.brand h1{font-size:20px;letter-spacing:.5px}
+.brand .sub{color:var(--muted);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.brand .tag{color:var(--saff);font-size:11px;margin-top:2px}
+.status-pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);
+  background:rgba(34,197,94,.08);color:var(--green);font-size:12px;padding:4px 10px;border-radius:20px;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.datastatus{font-size:11px;color:var(--amber);border:1px solid rgba(245,158,11,.4);
+  background:rgba(245,158,11,.08);padding:3px 8px;border-radius:6px;font-family:var(--mono)}
+/* nav */
+nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+nav a{color:var(--muted);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+nav a:hover{color:var(--text);background:var(--card2)}
+nav a.active{background:linear-gradient(135deg,#1b3a6b,#2a5aa8);color:#fff}
+.modebar{margin-left:auto;display:flex;gap:4px}
+.modebar button{border:1px solid var(--border);background:var(--card);color:var(--muted);
+  padding:7px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer}
+.modebar button.active{background:var(--saff);color:#0a0f1e;border-color:var(--saff)}
+/* cards */
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.card h3{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;font-weight:700}
+.card h3 .live{color:var(--green)}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px}
+.kpi .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.kpi .val{font-size:26px;font-weight:800;margin-top:6px;font-family:var(--mono)}
+.kpi .delta{font-size:12px;margin-top:4px;font-weight:700}
+.up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--muted)}
+.section{display:none}.section.active{display:block}
+/* heatmap table */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--border)}
+th{color:var(--muted);text-transform:uppercase;font-size:11px;letter-spacing:.5px}
+tbody tr:hover{background:var(--card2)}
+.cell{display:inline-block;padding:4px 10px;border-radius:6px;font-family:var(--mono);font-weight:700}
+.st-SURGE,.st-RISING{color:var(--red)} .st-DROP,.st-FALLING{color:var(--green)} .st-STABLE{color:var(--muted)}
+.badge{padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700}
+.b-LOW{background:rgba(34,197,94,.15);color:var(--green)}
+.b-MODERATE{background:rgba(245,158,11,.15);color:var(--amber)}
+.b-HIGH{background:rgba(239,68,68,.15);color:var(--red)}
+.b-CRITICAL{background:rgba(239,68,68,.3);color:#fff}
+.b-NORMAL{background:rgba(34,197,94,.15);color:var(--green)}
+.b-WARNING{background:rgba(245,158,11,.15);color:var(--amber)}
+.b-HIGH\ DISAGREEMENT{background:rgba(239,68,68,.2);color:var(--red)}
+.b-NO\ DATA{background:#1e293b;color:var(--muted)}
+.gauge-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.gauge{position:relative;width:130px;height:130px}
+.gauge .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;font-family:var(--mono)}
+.gauge .num b{font-size:26px}
+.gauge .num span{font-size:11px;color:var(--muted)}
+/* chart boxes */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+.btn{border:1px solid var(--border);background:var(--card2);color:var(--text);padding:8px 14px;
+  border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+.btn.primary{background:linear-gradient(135deg,#2a5aa8,#38bdf8);border:none;color:#fff}
+.btn:hover{opacity:.9}
+input,select,textarea{background:var(--bg2);border:1px solid var(--border);color:var(--text);
+  padding:8px 10px;border-radius:8px;font-size:13px;width:100%}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
+label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+/* chat */
+.chat{display:flex;flex-direction:column;gap:10px;height:420px;overflow-y:auto;padding-right:4px}
+.msg{max-width:85%;padding:10px 12px;border-radius:10px;font-size:13px;white-space:pre-wrap}
+.msg.user{align-self:flex-end;background:linear-gradient(135deg,#1b3a6b,#2a5aa8)}
+.msg.assistant{align-self:flex-start;background:var(--card2);border:1px solid var(--border)}
+.msg .meta{font-size:10px;color:var(--muted);margin-top:6px;font-family:var(--mono)}
+.route-list{display:flex;flex-wrap:wrap;gap:6px}
+.route-chip{border:1px solid var(--border);background:var(--card2);color:var(--blue);
+  padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;font-family:var(--mono)}
+.route-chip:hover{background:#1b3a6b;color:#fff}
+h2.view-title{font-size:20px;margin-bottom:4px}
+.view-sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+.spark-bar{display:flex;align-items:flex-end;gap:2px;height:34px}
+.spark-bar div{flex:1;background:var(--blue);border-radius:2px;opacity:.7}
+.muted{color:var(--muted)} .small{font-size:11px} .mono{font-family:var(--mono)}
+.alert-item{border-left:3px solid var(--amber);background:var(--card2);padding:10px 12px;border-radius:8px;margin-bottom:8px;font-size:13px}
+.alert-item.sev-HIGH,.alert-item.sev-CRITICAL{border-left-color:var(--red)}
+.alert-item .t{font-size:10px;color:var(--muted);font-family:var(--mono)}
+table.tight td,table.tight th{padding:6px 8px}
+.loading{color:var(--muted);font-style:italic;font-size:13px;padding:20px;text-align:center}
+.empty{color:var(--dim);font-size:13px;text-align:center;padding:30px}
+.svgmap{width:100%;max-width:520px;margin:0 auto;display:block}
+.maplegend{display:flex;gap:12px;justify-content:center;font-size:11px;color:var(--muted);margin-top:6px}
+@media(max-width:700px){.kpis{grid-template-columns:1fr 1fr}.cols{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <div class="emblem"></div>
+      <div>
+        <h1>VAYUSUTRA</h1>
+        <div class="sub">National Airfare Intelligence &amp; Inflation Analytics Platform</div>
+        <div class="tag">Measure &rarr; Explain &rarr; Forecast &rarr; Simulate</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span class="datastatus" id="dataStatus">Data status: SIMULATED</span>
+      <span class="status-pill"><span class="dot"></span><span id="healthPill">Connecting</span></span>
+    </div>
+  </div>
+
+  <nav id="nav">
+    <a data-view="overview" class="active">Overview</a>
+    <a data-view="routes">Routes</a>
+    <a data-view="heatmap">Heatmap</a>
+    <a data-view="forecast">Forecast</a>
+    <a data-view="cpi">CPI Impact</a>
+    <a data-view="anomalies">Anomalies</a>
+    <a data-view="simulator">Simulator</a>
+    <a data-view="trust">Data Trust</a>
+    <a data-view="validation">Validation</a>
+    <a data-view="reports">Reports</a>
+    <a data-view="ai">AI Analyst</a>
+    <span class="modebar">
+      <button data-mode="POLICY" class="active">Policy</button>
+      <button data-mode="ANALYST">Analyst</button>
+      <button data-mode="AVIATION">Aviation</button>
+    </span>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <div class="section active" id="view-overview">
+    <h2 class="view-title">National Airfare Conditions</h2>
+    <div class="view-sub" id="ovSub">Loading real-time intelligence&hellip;</div>
+    <div class="grid kpis" id="kpis"></div>
+    <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:14px">
+      <div class="card">
+        <h3>National Airfare Index Trend <span class="live">&#9679; live</span></h3>
+        <div id="trendChart" style="height:240px"></div>
+        <div class="legend"><span><i style="background:#38bdf8"></i>Laspeyres</span><span><i style="background:#c084fc"></i>Fisher</span><span><i style="background:#22c55e"></i>Spot T+1</span></div>
+      </div>
+      <div class="card">
+        <h3>7-Day Forecast</h3>
+        <div id="fcOverview" class="small"></div>
+        <div id="fcChart" style="height:150px;margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="grid cols" style="margin-top:14px">
+      <div class="card"><h3>Why did the index move? &mdash; CPI Contributors</h3><div id="cpiBar"></div></div>
+      <div class="card"><h3>Market Anomalies</h3><div id="anomFeed"></div></div>
+    </div>
+    <div class="grid cols" style="margin-top:14px">
+      <div class="card"><h3>Top Rising Routes</h3><div id="topRising"></div></div>
+      <div class="card"><h3>Top Falling Routes</h3><div id="topFalling"></div></div>
+    </div>
+  </div>
+
+  <!-- ROUTES -->
+  <div class="section" id="view-routes">
+    <h2 class="view-title">Route Intelligence</h2>
+    <div class="view-sub">Select a route to inspect T+1 &rarr; T+45 fares, movement, forecast and CPI contribution.</div>
+    <div class="route-list" id="routeChips"></div>
+    <div class="card" style="margin-top:14px" id="routeDetail"><div class="empty">Select a route above.</div></div>
+    <div class="card" style="margin-top:14px">
+      <h3>Route Comparison</h3>
+      <input id="compareInput" value="DEL-BOM,DEL-BLR,BOM-DEL" style="max-width:320px">
+      <button class="btn primary" style="margin-top:8px" onclick="doCompare()">Compare</button>
+      <div id="compareOut" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- HEATMAP -->
+  <div class="section" id="view-heatmap">
+    <h2 class="view-title">Airfare Heatmap <span class="mono small muted">20 routes &times; 5 horizons</span></h2>
+    <div class="view-sub">Cell = current fare, 24h change %, volatility. Click a row for route detail.</div>
+    <div class="card"><div id="heatmapTable"></div></div>
+  </div>
+
+  <!-- FORECAST -->
+  <div class="section" id="view-forecast">
+    <h2 class="view-title">Forecasting Engine</h2>
+    <div class="view-sub">Walk-forward validated; every forecast exposes a confidence interval. Tagged MODELLED.</div>
+    <div class="grid cols">
+      <div class="card"><h3>National Forecast</h3><div id="fcNational"></div></div>
+      <div class="card">
+        <h3>Route Forecast</h3>
+        <label>Route</label>
+        <select id="fcRouteSel"></select>
+        <label style="margin-top:8px">Horizon (days)</label>
+        <input type="number" id="fcRouteHorizon" value="7" min="1" max="30">
+        <button class="btn primary" style="margin-top:10px" onclick="loadRouteForecast()">Forecast</button>
+        <div id="fcRoute" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CPI -->
+  <div class="section" id="view-cpi">
+    <h2 class="view-title">CPI Impact Decomposition</h2>
+    <div class="view-sub">Route-level contribution to the daily headline CPI movement.</div>
+    <div class="card"><div id="cpiDeco"></div></div>
+  </div>
+
+  <!-- ANOMALIES -->
+  <div class="section" id="view-anomalies">
+    <h2 class="view-title">Market Anomaly Detection</h2>
+    <div class="view-sub">Unusual market behaviour (distinct from data-quality outliers).</div>
+    <div class="card"><div id="anomList"></div></div>
+  </div>
+
+  <!-- SIMULATOR -->
+  <div class="section" id="view-simulator">
+    <h2 class="view-title">Policy What-if Simulator</h2>
+    <div class="view-sub"><span class="datastatus">MODELLED output &mdash; not a forecast</span></div>
+    <div class="card">
+      <div class="form-grid">
+        <div><label>Airfare shock %</label><input type="number" id="sAir" value="10"></div>
+        <div><label>Demand change %</label><input type="number" id="sDem" value="5"></div>
+        <div><label>Capacity change %</label><input type="number" id="sCap" value="-3"></div>
+        <div><label>ATF adjustment %</label><input type="number" id="sAtf" value="0"></div>
+        <div><label>Booking-horizon shock %</label><input type="number" id="sHor" value="0"></div>
+        <div><label>Seasonal factor %</label><input type="number" id="sSea" value="0"></div>
+      </div>
+      <button class="btn primary" onclick="runScenario()">Run Scenario</button>
+      <div id="scenOut" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- TRUST -->
+  <div class="section" id="view-trust">
+    <h2 class="view-title">Data Trust Center</h2>
+    <div class="view-sub">Transparent weighted trust score across freshness, completeness, coverage, source health, duplicate/outlier rate, validation &amp; source agreement.</div>
+    <div class="card"><div id="trustOut"></div></div>
+  </div>
+
+  <!-- VALIDATION -->
+  <div class="section" id="view-validation">
+    <h2 class="view-title">Model Validation</h2>
+    <div class="view-sub">Walk-forward model comparison for the national series (MODELLED).</div>
+    <div class="card"><div id="valOut"></div></div>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="section" id="view-reports">
+    <h2 class="view-title">Automated Daily Intelligence Report</h2>
+    <div class="view-sub" id="repMeta">Data tagged REAL / SIMULATED / MODELLED per section.</div>
+    <div class="card"><div id="repOut"></div></div>
+  </div>
+
+  <!-- AI -->
+  <div class="section" id="view-ai">
+    <h2 class="view-title">AI Policy Analyst</h2>
+    <div class="view-sub">Grounded in verified platform data &mdash; the analyst never computes statistics itself and never hallucinates.</div>
+    <div class="card">
+      <div class="chat" id="chat"></div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input id="aiQ" placeholder="Ask e.g. Why did airfare inflation increase today?">
+        <button class="btn primary" onclick="askAI()">Ask</button>
+      </div>
+      <div class="small muted" style="margin-top:8px" id="aiCaps"></div>
+    </div>
+  </div>
+
+  <div style="text-align:center;color:var(--dim);font-size:11px;margin:30px 0 10px">
+    VAYUSUTRA APIx &middot; National Airfare Intelligence &amp; Inflation Analytics Platform &middot; SIH26056 &middot;
+    <span class="mono">Data status: SIMULATED (calibrated market simulator)</span>
+  </div>
+</div>
+
+<script>
+const API='/api/v1';
+const state={routes:[],mode:'POLICY'};
+
+function el(id){return document.getElementById(id)}
+function h(v,f){return v==null?'—':(f?f(v):v)}
+function fmtN(v,d=0){return v==null?'—':Number(v).toLocaleString('en-IN',{maximumFractionDigits:d})}
+function pct(v,d=2){return v==null?'—':(v>=0?'+':'')+Number(v).toFixed(d)+'%'}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+async function get(p){const r=await fetch(API+p);if(!r.ok)throw new Error(p+' '+r.status);return r.json()}
+function badge(sev){return `<span class="badge b-${esc(sev)}">${esc(sev)}</span>`}
+
+/* NAV */
+document.getElementById('nav').querySelectorAll('a[data-view]').forEach(a=>{
+  a.onclick=()=>{document.querySelectorAll('#nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    el('view-'+a.dataset.view).classList.add('active');
+    if(a.dataset.view==='heatmap')loadHeatmap();
+    if(a.dataset.view==='forecast')loadForecast();
+    if(a.dataset.view==='anomalies')loadAnomalies();
+    if(a.dataset.view==='trust')loadTrust();
+    if(a.dataset.view==='validation')loadValidation();
+    if(a.dataset.view==='reports')loadReport();
+    if(a.dataset.view==='cpi')loadCPIDeco();
+    if(a.dataset.view==='ai')initAI();
+    if(a.dataset.view==='simulator'){}}
+});
+document.querySelectorAll('.modebar button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.modebar button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+  state.mode=b.dataset.mode;applyMode();
+});
+function applyMode(){
+  const m=state.mode;
+  // simple guidance chips are re-rendered by overview; nav stays same (same APIs)
+}
+
+/* SVG charts */
+function lineChart(id,series,labels,opts={}){
+  const w=Math.max(320,el(id).clientWidth||520),hh=opts.height||220,pad=30;
+  const all=series.flatMap(s=>s.data);let mn=Math.min(...all),mx=Math.max(...all);
+  const rng=(mx-mn)||1;mn-=rng*.1;mx+=rng*.1;
+  const X=(i)=>(i/(labels.length-1||1))*(w-2*pad)+pad;
+  const Y=(v)=>hh-pad-((v-mn)/(mx-mn))*(hh-2*pad);
+  let paths=series.map((s,si)=>{
+    let d=s.data.map((v,i)=>`${i?'L':'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(' ');
+    return `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.2"/>`;
+  }).join('');
+  // CI band for forecast
+  let band='';
+  if(opts.lower&&opts.upper){
+    let d='';
+    for(let i=0;i<opts.lower.length;i++){d+=`${i?'L':'M'}${X(i)} ${Y(opts.upper[i])}`}
+    for(let i=opts.lower.length-1;i>=0;i--){d+=`L${X(i)} ${Y(opts.lower[i])}`}
+    band=`<path d="${d}" fill="rgba(56,189,248,.15)" stroke="none"/>`;
+  }
+  let gl='';labels.forEach((l,i)=>{if(i%Math.max(1,Math.floor(labels.length/8))===0)gl+=`<text x="${X(i)}" y="${hh-8}" fill="#6b7a99" font-size="9" text-anchor="middle">${esc(l)}</text>`});
+  el(id).innerHTML=`<svg width="100%" viewBox="0 0 ${w} ${hh}" style="height:${hh}px">${band}${paths}${gl}</svg>`;
+}
+function hbar(id,items,color='#38bdf8'){
+  const mx=Math.max(...items.map(i=>Math.abs(i.v)),1);
+  el(id).innerHTML=items.map(i=>{
+    const pctv=(Math.abs(i.v)/mx*80).toFixed(1);
+    const col=i.v>=0?'#ef4444':'#22c55e';
+    return `<div style="margin-bottom:7px"><div style="display:flex;justify-content:space-between;font-size:12px"><span class="mono">${esc(i.k)}</span><span class="mono">${i.v>=0?'+':''}${Number(i.v).toFixed(2)} bps</span></div>
+    <div style="height:8px;background:#1e293b;border-radius:4px;overflow:hidden"><div style="width:${pctv}%;height:100%;background:${col};border-radius:4px"></div></div></div>`;
+  }).join('');
+}
+
+/* OVERVIEW */
+async function loadOverview(){
+  try{
+    const o=await get('/analytics/overview');
+    el('dataStatus').textContent='Data status: SIMULATED';
+    el('ovSub').textContent='As of '+o.as_of+' · '+(o.data_status||'SIMULATED');
+    const k=o.kpi;
+    const kpis=[
+      {l:'National Airfare Index',v:fmtN(k.national_airfare_index,2),d:pct(k.daily_change_pct),c:k.daily_change_pct>=0?'up':'down'},
+      {l:'Daily Change',v:pct(k.daily_change_pct),d:'',c:k.daily_change_pct>=0?'up':'down'},
+      {l:'7-Day Change',v:pct(k.seven_day_change_pct),d:'',c:k.seven_day_change_pct>=0?'up':'down'},
+      {l:'CPI Contribution',v:(k.cpi_contribution_bps>=0?'+':'')+Number(k.cpi_contribution_bps||0).toFixed(2)+' bps',d:'',c:k.cpi_contribution_bps>=0?'up':'down'},
+      {l:'Pressure Score',v:fmtN(k.market_pressure_score,1)+' / '+esc(k.market_pressure_level),d:'',c:'flat'},
+      {l:'Data Trust',v:fmtN(k.data_trust_score,1)+'%',d:'',c:'flat'},
+      {l:'Active Routes',v:k.active_routes+'/20',d:'',c:'flat'},
+      {l:'Quotes Processed',v:fmtN(k.quotes_processed),d:'',c:'flat'},
+    ];
+    el('kpis').innerHTML=kpis.map(x=>`<div class="kpi"><div class="lbl">${x.l}</div><div class="val">${x.v}</div><div class="delta ${x.c}">${x.d}</div></div>`).join('');
+
+    // trend chart
+    const ts=await get('/index/timeseries?limit=40');
+    const L=ts.data.map(r=>r.laspeyres_index),F=ts.data.map(r=>r.fisher_index),S=ts.data.map(r=>r.spot_t1_index);
+    const labels=ts.data.map(r=>r.calculation_date.slice(5));
+    lineChart('trendChart',[{data:L,color:'#38bdf8'},{data:F,color:'#c084fc'},{data:S,color:'#22c55e'}],labels,{height:220});
+
+    // forecast overview
+    if(o.forecast_7d){const f=o.forecast_7d;
+      el('fcOverview').innerHTML=`Model: <b>${esc(f.model)}</b><br>Point: <b>${fmtN(f.point_forecast,2)}</b> (95% CI ${fmtN(f.lower_bound,2)}&ndash;${fmtN(f.upper_bound,2)})<br>MAPE ${h(f.metrics.mape,x=>x.toFixed(2))}%`;
+      const base=ts.data[ts.data.length-1].laspeyres_index;
+      // mini chart: last 14 actual + 7 forecast
+      const hist=ts.data.slice(-14).map(r=>r.laspeyres_index);
+      const n=hist.length;const seq=[];
+      for(let i=0;i<7;i++){const t=base+(f.point_forecast-base)*(i+1)/7;seq.push(t)}
+      const allpts=hist.concat(seq);
+      lineChart('fcChart',[{data:hist,color:'#38bdf8'},{data:[...Array(n-1).fill(null),...seq].map((v,i)=>i<n-1?null:hist[n-1]+(v-hist[n-1])),color:'#ef4444'}],allpts.map((_,i)=>i),{height:150});
+    } else el('fcOverview').innerHTML='<div class="empty">Forecast unavailable.</div>';
+
+    // cpi bar + anomalies + movers
+    if(o.heatmap){const dec=await get('/analytics/cpi-decomposition');
+      hbar('cpiBar',dec.contributors.slice(0,7).map(c=>({k:c.route_code,v:c.contribution_bps})));
+    }
+    el('anomFeed').innerHTML=o.anomalies.length?o.anomalies.slice(0,4).map(a=>`<div class="alert-item sev-${esc(a.severity)}"><b>${esc(a.anomaly_type)}</b> ${badge(a.severity)} <span class="small">${esc(a.route_code||'')}</span><div class="t">${esc(a.explanation)}</div></div>`).join(''):'<div class="empty">No anomalies detected.</div>';
+    el('topRising').innerHTML=(o.top_risers||[]).map(r=>`<div class="small mono" style="margin-bottom:5px">${esc(r.route_code)} <span class="up">+${Number(r.contribution_bps).toFixed(2)} bps</span></div>`).join('')||'<div class="empty">—</div>';
+    el('topFalling').innerHTML=(o.top_fallers||[]).map(r=>`<div class="small mono" style="margin-bottom:5px">${esc(r.route_code)} <span class="down">${Number(r.contribution_bps).toFixed(2)} bps</span></div>`).join('')||'<div class="empty">—</div>';
+  }catch(e){el('kpis').innerHTML=`<div class="empty">Error loading: ${esc(e.message)}. Start the API server.</div>`}
+}
+
+/* ROUTES */
+async function loadRoutes(){
+  try{
+    const r=await get('/routes');
+    state.routes=r.routes.map(x=>x.route_code);
+    el('routeChips').innerHTML=state.routes.map(rc=>`<span class="route-chip" onclick="loadRouteDetail('${rc}')">${rc}</span>`).join('');
+    const fcs=await get('/forecast/models');
+    const sel=el('fcRouteSel');sel.innerHTML=state.routes.map(rc=>`<option>${rc}</option>`).join('');
+  }catch(e){el('routeChips').innerHTML='<div class="empty">Routes unavailable.</div>'}
+}
+async function loadRouteDetail(code){
+  el('routeDetail').innerHTML='<div class="loading">Loading route intelligence&hellip;</div>';
+  try{
+    const r=await get('/analytics/route/'+code);
+    const ch=r.changes;
+    el('routeDetail').innerHTML=`
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div><b style="font-size:18px">${esc(r.route_code)}</b> <span class="muted">${esc(r.origin_city)} &rarr; ${esc(r.destination_city)} · ${r.distance_km} km</span></div>
+        <div class="small muted mono">as of ${r.as_of_date}</div>
+      </div>
+      <div class="grid kpis" style="margin-top:12px">
+        <div class="kpi"><div class="lbl">Median Fare</div><div class="val">₹${fmtN(r.current_median_fare_inr)}</div></div>
+        <div class="kpi"><div class="lbl">Jevons Fare</div><div class="val">₹${fmtN(r.representative_jevons_fare_inr)}</div></div>
+        <div class="kpi"><div class="lbl">24h / 7d / 30d</div><div class="val" style="font-size:16px">${pct(ch['24h_pct'])} / ${pct(ch['7d_pct'])} / ${pct(ch['30d_pct'])}</div></div>
+        <div class="kpi"><div class="lbl">CPI Contribution</div><div class="val" style="font-size:16px">${r.cpi_contribution_bps==null?'—':(r.cpi_contribution_bps>=0?'+':'')+r.cpi_contribution_bps.toFixed(2)+' bps'}</div></div>
+      </div>
+      <div class="cols" style="margin-top:12px">
+        <div>
+          <h3>Booking Horizons (T+1 &rarr; T+45)</h3>
+          <table class="tight">${['T+1','T+7','T+15','T+30','T+45'].map(w=>{const c=r.horizons[w];return `<tr><td class="mono">${w}</td><td class="mono">₹${c?fmtN(c.fare):'—'}</td><td class="mono muted">rel ${c?Number(c.relative).toFixed(3):'—'}</td></tr>`}).join('')}</table>
+        </div>
+        <div>
+          <h3>Source Consensus</h3>
+          <div class="small">Level: ${r.source_consensus.level?badge(r.source_consensus.level):'—'} · CV ${r.source_consensus.cv}</div>
+          <table class="tight" style="margin-top:8px"><tr><th>Source</th><th>Fare</th><th>Dev</th></tr>
+          ${(r.source_consensus.sources||[]).slice(0,8).map(s=>`<tr><td class="mono">${esc(s.source_portal)}</td><td class="mono">₹${s.median_fare?fmtN(s.median_fare):'—'}</td><td class="${s.flagged?'down':'muted'}">${s.flagged?'&#9888; ':''}${s.deviation_from_median_pct.toFixed(1)}%</td></tr>`).join('')}</table>
+        </div>
+      </div>
+      <div class="cols" style="margin-top:12px">
+        <div><h3>Historical (composite relative)</h3><div id="routeHistChart"></div></div>
+        <div><h3>Forecast (7d)</h3><div class="small" id="routeFc">${r.forecast?`Model ${esc(r.forecast.model)} · ${fmtN(r.forecast.point_forecast,3)} (CI ${fmtN(r.forecast.lower_bound,3)}&ndash;${fmtN(r.forecast.upper_bound,3)})`:'unavailable'}</div>
+        <h3 style="margin-top:12px">Airlines</h3><table class="tight">${(r.airlines||[]).slice(0,5).map(a=>`<tr><td class="mono">${esc(a.airline_code)}</td><td class="mono">₹${fmtN(a.avg_fare)}</td><td class="muted">n=${a.samples}</td></tr>`).join('')}</table></div>
+      </div>
+      ${(r.anomaly_history||[]).length?`<h3 style="margin-top:12px">Anomaly History</h3>${r.anomaly_history.map(a=>`<div class="alert-item"><b>${esc(a.anomaly_type)}</b> ${badge(a.severity)} <div class="t">${esc(a.explanation)}</div></div>`).join('')}`:''}
+      <div class="small muted mono" style="margin-top:12px">Provenance: ${esc(r.provenance.route_data_source)} · traceable to raw quotes</div>`;
+    const hist=r.historical.map(x=>x.relative);
+    lineChart('routeHistChart',[{data:hist,color:'#38bdf8'}],r.historical.map(x=>x.date.slice(5)),{height:160});
+  }catch(e){el('routeDetail').innerHTML=`<div class="empty">Error: ${esc(e.message)}</div>`}
+}
+async function doCompare(){
+  const codes=el('compareInput').value.replace(/\s+/g,'').toUpperCase();
+  try{
+    const r=await get('/analytics/compare?route_codes='+encodeURIComponent(codes));
+    el('compareOut').innerHTML='<table><tr><th>Route</th><th>Median ₹</th><th>24h</th><th>7d</th><th>30d</th><th>CPI bps</th></tr>'+
+      r.comparison.map(x=>`<tr><td class="mono">${esc(x.route_code)}</td><td class="mono">${fmtN(x.current_median_fare_inr)}</td><td>${pct(x.changes['24h_pct'])}</td><td>${pct(x.changes['7d_pct'])}</td><td>${pct(x.changes['30d_pct'])}</td><td class="mono">${x.cpi_contribution_bps==null?'—':x.cpi_contribution_bps.toFixed(2)}</td></tr>`).join('')+'</table>';
+  }catch(e){el('compareOut').innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+/* HEATMAP */
+async function loadHeatmap(){
+  const t=el('heatmapTable');t.innerHTML='<div class="loading">Loading heatmap&hellip;</div>';
+  try{
+    const r=await get('/analytics/heatmap');
+    const wins=r.windows;
+    const byRoute={};r.cells.forEach(c=>{(byRoute[c.route_code]=byRoute[c.route_code]||{})[c.advance_window]=c;});
+    let html='<table><tr><th style="text-align:left">Route</th>'+wins.map(w=>`<th>${w}</th>`).join('')+'</tr>';
+    r.routes.forEach(rc=>{
+      const cells=wins.map(w=>byRoute[rc][w]);
+      html+=`<tr style="cursor:pointer" onclick="loadRouteDetail('${rc}')"><td class="mono" style="text-align:left;font-weight:700">${rc}</td>`;
+      cells.forEach(c=>{
+        const cls=c.status==='SURGE'||c.status==='RISING'?'st-SURGE':c.status==='STABLE'?'st-STABLE':'st-FALLING';
+        html+=`<td><div class="mono">₹${fmtN(c.current_fare)}</div><div class="${cls} small">${pct(c.price_change_pct)}</div><div class="small muted">σ ${Number(c.volatility).toFixed(3)}</div></td>`;
+      });
+      html+='</tr>';
+    });
+    html+='</table><div class="small muted" style="margin-top:8px">Click a row for route intelligence. Cells show fare · 24h change · volatility.</div>';
+    t.innerHTML=html;
+  }catch(e){t.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+/* FORECAST */
+async function loadForecast(){
+  const d=el('fcNational');d.innerHTML='<div class="loading">Computing national forecast&hellip;</div>';
+  try{
+    const f=await get('/forecast/national?horizon_days=7');
+    d.innerHTML=`<div class="gauge-wrap"><div style="flex:1">
+      <div class="mono" style="font-size:30px">${fmtN(f.point_forecast,2)}</div>
+      <div class="muted small">95% CI ${fmtN(f.lower_bound,2)} &ndash; ${fmtN(f.upper_bound,2)}</div>
+      <div style="margin-top:8px" class="small">Model: <b>${esc(f.model)}</b> · data ${esc(f.data_status)}</div>
+      <table class="tight" style="margin-top:8px"><tr><th>Metric</th><th>Value</th></tr>
+      ${Object.entries(f.metrics).map(([k,v])=>`<tr><td class="mono">${esc(k)}</td><td class="mono">${Number(v).toFixed(3)}</td></tr>`).join('')}</table>
+      <div class="small muted" style="margin-top:8px">Walk-forward validated models: ${Object.keys(f.model_validation||{}).join(', ')}</div>
+    </div></div>`;
+  }catch(e){d.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+async function loadRouteForecast(){
+  const code=el('fcRouteSel').value,hor=el('fcRouteHorizon').value||7;
+  el('fcRoute').innerHTML='<div class="loading">Forecasting&hellip;</div>';
+  try{const f=await get('/forecast/route/'+code+'?horizon_days='+hor);
+    el('fcRoute').innerHTML=`<div class="mono" style="font-size:26px">${fmtN(f.point_forecast,4)}</div><div class="muted small">95% CI ${fmtN(f.lower_bound,4)} &ndash; ${fmtN(f.upper_bound,4)} · model ${esc(f.model)}</div>`;
+  }catch(e){el('fcRoute').innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+/* CPI */
+async function loadCPIDeco(){
+  const d=el('cpiDeco');d.innerHTML='<div class="loading">Loading&hellip;</div>';
+  try{
+    const r=await get('/analytics/cpi-decomposition');
+    d.innerHTML=`<div class="mono" style="font-size:26px">${r.headline_cpi_impact_bps>=0?'+':''}${Number(r.headline_cpi_impact_bps).toFixed(2)} bps</div>
+      <div class="muted small">Headline CPI impact · transport ${r.transport_subgroup_impact_bps.toFixed(2)} bps · as of ${r.as_of_date}</div>
+      <div style="margin-top:14px" id="cpiDecoBar"></div>`;
+    hbar('cpiDecoBar',r.contributors.map(c=>({k:c.route_code,v:c.contribution_bps})));
+  }catch(e){d.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+/* ANOMALIES */
+async function loadAnomalies(){
+  const d=el('anomList');d.innerHTML='<div class="loading">Scanning for market anomalies&hellip;</div>';
+  try{
+    const r=await get('/anomalies?recompute=true&limit=50');
+    if(!r.length){d.innerHTML='<div class="empty">No market anomalies detected.</div>';return;}
+    d.innerHTML=r.map(a=>`<div class="alert-item sev-${esc(a.severity)}"><b>${esc(a.anomaly_type)}</b> ${badge(a.severity)} <span class="mono">${esc(a.route_code||'')}</span>
+      <div class="small">Observed ${a.observed_value==null?'—':Number(a.observed_value).toFixed(2)} · deviation ${a.deviation==null?'—':Number(a.deviation).toFixed(2)} · conf ${Number(a.confidence).toFixed(2)}</div>
+      <div class="t">${esc(a.explanation)}</div></div>`).join('');
+  }catch(e){d.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+/* SIMULATOR */
+async function runScenario(){
+  const body={airfare_shock_pct:+el('sAir').value,demand_change_pct:+el('sDem').value,capacity_change_pct:+el('sCap').value,
+    atf_adjustment_pct:+el('sAtf').value,booking_horizon_shock_pct:+el('sHor').value,seasonal_factor_pct:+el('sSea').value,name:'Dashboard scenario'};
+  el('scenOut').innerHTML='<div class="loading">Modelling scenario&hellip;</div>';
+  try{
+    const r=await (await fetch(API+'/scenario/simulate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json();
+    el('scenOut').innerHTML=`<div class="grid kpis">
+      <div class="kpi"><div class="lbl">Projected Index</div><div class="val">${fmtN(r.projected_index,2)}</div><div class="delta up">${pct(r.projected_index_change_pct)}</div></div>
+      <div class="kpi"><div class="lbl">Headline CPI</div><div class="val" style="font-size:18px">${r.projected_headline_cpi_bps>=0?'+':''}${Number(r.projected_headline_cpi_bps).toFixed(2)} bps</div></div>
+      <div class="kpi"><div class="lbl">Pressure</div><div class="val" style="font-size:18px">${r.pressure.score} ${badge(r.pressure.level)}</div></div>
+      <div class="kpi"><div class="lbl">Confidence Range</div><div class="val" style="font-size:14px">${fmtN(r.confidence_range.lower_index,2)}&ndash;${fmtN(r.confidence_range.upper_index,2)}</div></div></div>
+      <div class="small muted" style="margin-top:10px"><span class="datastatus">${esc(r.data_status)}</span> Top route impacts: ${r.route_level_impact.slice(0,4).map(x=>`${x.route_code} ${pct(x.projected_change_pct)}`).join(' · ')}</div>`;
+  }catch(e){el('scenOut').innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+/* TRUST */
+async function loadTrust(){
+  const d=el('trustOut');d.innerHTML='<div class="loading">Loading&hellip;</div>';
+  try{
+    const r=await get('/data-quality');
+    const pctv=Math.min(r.trust_score,100);
+    const color=r.level==='EXCELLENT'||r.level==='GOOD'?'#22c55e':r.level==='FAIR'?'#f59e0b':'#ef4444';
+    d.innerHTML=`<div class="gauge-wrap"><div class="gauge">
+      <svg width="130" height="130" viewBox="0 0 130 130">
+        <circle cx="65" cy="65" r="52" fill="none" stroke="#1e293b" stroke-width="12"/>
+        <circle cx="65" cy="65" r="52" fill="none" stroke="${color}" stroke-width="12" stroke-dasharray="${(pctv/100*326.7).toFixed(1)} 326.7" transform="rotate(-90 65 65)"/>
+      </svg>
+      <div class="num"><b>${fmtN(r.trust_score,1)}</b><span>${esc(r.level)}</span></div></div>
+      <div style="flex:1;min-width:260px"><table class="tight">
+      ${Object.entries(r.components).map(([k,v])=>`<tr><td class="muted" style="text-align:left">${esc(k).replace(/_/g,' ')}</td><td class="mono" style="text-align:right">${typeof v==='number'?Number(v).toFixed(1):v}</td></tr>`).join('')}
+      </table></div></div>`;
+  }catch(e){d.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+/* VALIDATION */
+async function loadValidation(){
+  const d=el('valOut');d.innerHTML='<div class="loading">Running walk-forward validation&hellip;</div>';
+  try{
+    const r=await get('/forecast/validation');
+    const models=Object.entries(r.models||{});
+    d.innerHTML=`<div class="small muted">Sample ${r.sample} days · validation horizon ${r.validation_horizon} · best model: <b>${esc(r.best_model)}</b></div>
+    <table style="margin-top:10px"><tr><th>Model</th><th>MAE</th><th>RMSE</th><th>MAPE</th><th>sMAPE</th><th>R²</th></tr>
+    ${models.map(([name,m])=>`<tr><td class="mono" style="text-align:left">${esc(name)}</td><td class="mono">${Number(m.mae).toFixed(3)}</td><td class="mono">${Number(m.rmse).toFixed(3)}</td><td class="mono">${Number(m.mape).toFixed(2)}</td><td class="mono">${Number(m.smape).toFixed(2)}</td><td class="mono">${Number(m.r2).toFixed(3)}</td></tr>`).join('')}</table>
+    <div class="small muted" style="margin-top:8px">Method: expanding-window walk-forward with automatic model selection (MODELLED).</div>`;
+  }catch(e){d.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+/* REPORTS */
+async function loadReport(){
+  const d=el('repOut');d.innerHTML='<div class="loading">Generating daily intelligence report&hellip;</div>';
+  try{
+    const r=await (await fetch(API+'/reports/daily')).json();
+    el('repMeta').innerHTML='Generated '+r.generated_at.replace('T',' ').slice(0,19)+'Z · '+r.data_status;
+    const ni=r.national_index||{};
+    d.innerHTML=`
+      <div class="grid kpis" style="margin-bottom:14px">
+        <div class="kpi"><div class="lbl">Laspeyres</div><div class="val">${h(ni.laspeyres_index,fmtN)}</div></div>
+        <div class="kpi"><div class="lbl">Daily Change</div><div class="val">${h(ni.daily_pct_change,pct)}</div></div>
+        <div class="kpi"><div class="lbl">Headline bps</div><div class="val">${h(ni.bps_headline_cpi_impact,x=>x.toFixed(2))}</div></div>
+        <div class="kpi"><div class="lbl">Pressure</div><div class="val">${r.pressure_score?fmtN(r.pressure_score.score,1)+' '+badge(r.pressure_score.level):'—'}</div></div>
+      </div>
+      <div class="cols">
+        <div><h3>CPI Decomposition</h3><div id="repCpiBar"></div></div>
+        <div><h3>Forecast 7d</h3><div class="small">${r.forecast_7d?`${fmtN(r.forecast_7d.point_forecast,2)} (CI ${fmtN(r.forecast_7d.lower_bound,2)}&ndash;${fmtN(r.forecast_7d.upper_bound,2)}) · ${esc(r.forecast_7d.model)} · MODELLED`:'unavailable'}</div>
+        <h3 style="margin-top:12px">Anomalies</h3><div class="small">${r.anomalies?r.anomalies.count+' detected':''}</div>
+        <h3 style="margin-top:12px">Data Quality</h3><div class="small">Trust ${r.data_quality?fmtN(r.data_quality.trust_score,1):'—'}</div>
+        <h3 style="margin-top:12px">Methodology</h3><div class="small muted">${r.methodology?esc(r.methodology.index_method):''}</div></div>
+      </div>
+      <div style="margin-top:12px" class="small muted"><span class="datastatus">MIXED REAL/SIMULATED/MODELLED as labelled</span></div>`;
+    if(r.cpi_decomposition&&r.cpi_decomposition.contributors_top)hbar('repCpiBar',r.cpi_decomposition.contributors_top.map(c=>({k:c.route_code,v:c.contribution_bps})));
+  }catch(e){d.innerHTML=`<div class="empty">${esc(e.message)}</div>`}
+}
+
+/* AI */
+function initAI(){
+  const q=el('aiQ');
+  if(el('chat').childElementCount===0){
+    el('chat').innerHTML=`<div class="msg assistant">I am the VayuSutra AI Policy Analyst. I answer data-grounded questions about the airfare index, CPI contributors, forecasts, pressure, routes, scenarios, anomalies and data quality. <div class="meta">DATA-GROUNDED · NO HALLUCINATION</div></div>`;
+  }
+  fetch(API+'/ai/capabilities').then(r=>r.json()).then(r=>{el('aiCaps').textContent='Try: '+r.intents.slice(0,5).join(' | ');}).catch(()=>{});
+  q.onkeydown=function(e){if(e.key==='Enter')askAI();};
+}
+async function askAI(){
+  const q=el('aiQ').value.trim();if(!q)return;
+  el('chat').insertAdjacentHTML('beforeend',`<div class="msg user">${esc(q)}</div>`);
+  el('chat').insertAdjacentHTML('beforeend',`<div class="msg assistant"><i>Analysing&hellip;</i></div>`);
+  el('aiQ').value='';el('chat').scrollTop=el('chat').scrollHeight;
+  try{
+    const r=await (await fetch(API+'/ai/ask',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question:q})})).json();
+    const msgs=el('chat').querySelectorAll('.msg');msgs[msgs.length-1].outerHTML=
+      `<div class="msg assistant">${esc(r.answer)}<div class="meta">intent: ${esc(r.intent)} · data_status: ${esc(r.data_status)} · ${r.timestamp.replace('T',' ').slice(0,19)}Z</div></div>`;
+    if(r.affected_routes&&r.affected_routes.length){el('chat').insertAdjacentHTML('beforeend',`<div class="msg assistant" style="background:none;border:none;padding:0"><div class="route-list">${r.affected_routes.map(rc=>`<span class="route-chip" onclick="loadRouteDetail('${rc}')">${rc}</span>`).join('')}</div><div class="meta">affected routes — click to inspect</div></div>`);}
+  }catch(e){
+    const msgs=el('chat').querySelectorAll('.msg');msgs[msgs.length-1].outerHTML=`<div class="msg assistant">Data unavailable: ${esc(e.message)}</div>`;
+  }
+  el('chat').scrollTop=el('chat').scrollHeight;
+}
+
+/* init */
+async function boot(){
+  loadOverview();loadRoutes();loadHeatmap();loadCPIDeco();loadTrust();
+  try{const h=await get('/health');el('healthPill').textContent='HEALTHY · '+(h.components&&h.components.database||'SQLite');}catch(e){el('healthPill').textContent='API offline';}
+  setInterval(()=>{if(document.querySelector('#nav a.active').dataset.view==='overview')loadOverview();},45000);
+}
+boot();
+</script>
+</body>
+</html>

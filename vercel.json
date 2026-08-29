@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "main.py", "use": "@vercel/python", "config": { "maxLambdaSize": "20mb" } }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "main.py" }
+  ],
+  "env": {
+    "VAYUSUTRA_WORKER": "0",
+    "VAYUSUTRA_SEED_DAYS": "8"
+  }
+}

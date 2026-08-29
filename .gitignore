@@ -1,0 +1,32 @@
+# Environment / secrets
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# SQLite runtime artifacts (committed DB is optional; WAL/SHM are runtime)
+*.db-shm
+*.db-wal
+# *.db
+
+# Model artifacts (regenerated on training)
+data/models/*.pkl
+
+# Generated reports
+vayusutra_apix/data/*backtest*.csv
+reports/*.pdf
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
