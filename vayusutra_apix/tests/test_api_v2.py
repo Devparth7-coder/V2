@@ -19,6 +19,22 @@ def test_health_has_components(client):
     assert data["telemetry"]["dgca_routes_monitored"] == 20
 
 
+def test_timeseries_returns_most_recent_window(client):
+    """
+    Regression: /api/v1/index/timeseries must return the MOST RECENT `limit` days in
+    ascending chronological order (not the OLDEST), so the dashboard graph tracks the
+    latest ingested data instead of being frozen on the first `limit` days.
+    """
+    full = client.get("/api/v1/index/timeseries?limit=365").json()["data"]
+    assert len(full) > 2
+    latest_date = full[-1]["calculation_date"]
+    win = client.get("/api/v1/index/timeseries?limit=3").json()["data"]
+    # Limited window must end at the latest available date and be ascending.
+    assert win[-1]["calculation_date"] == latest_date
+    dates = [r["calculation_date"] for r in win]
+    assert dates == sorted(dates)
+
+
 def test_overview_endpoint(client):
     r = client.get("/api/v1/analytics/overview")
     assert r.status_code == 200
